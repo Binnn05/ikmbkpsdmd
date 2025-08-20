@@ -7,7 +7,7 @@ export const CHART_LABELS = {
     6: 'Kompetensi Petugas',
     7: 'Perilaku Petugas',
     8: 'Kualitas Sarpras',
-    9: 'Penanganan Pengaduan'
+    9: 'Penanganan Pengaduan',
 };
 
 function parseCSVLine(line) {

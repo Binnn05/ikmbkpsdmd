@@ -4,6 +4,18 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 Chart.register(ChartDataLabels);
 
+export const CHART_LABELS = {
+    1: 'Kesesuaian Persyaratan',
+    2: 'Kemudahan Prosedur',
+    3: 'Kecepatan Pelayanan',
+    4: 'Kewajaran Tarif',
+    5: 'Kesesuaian Hasil',
+    6: 'Kompetensi Petugas',
+    7: 'Perilaku Petugas',
+    8: 'Kualitas Sarpras',
+    9: 'Penanganan Pengaduan',
+};
+
 const UnsurChart = ({ title, ikmValue, dataCounts }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);

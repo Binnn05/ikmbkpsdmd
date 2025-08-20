@@ -7,16 +7,14 @@ import SummaryBox from "../components/SummaryBox";
 import UnsurSummaryTable from "../components/UnsurSummaryTable";
 import UnsurChart from "../components/UnsurChart";
 import SaranList from "../components/SaranList";
-import { CHART_LABELS } from "../utils/dataProcessor";
+import { CHART_LABELS } from "../components/UnsurChart";
 
 export default function FrontPage() {
   const { getActiveSurvey, getAnalytics } = useApi();
-  // BARU: Tambahkan setSearchParams untuk mengubah URL
   const [params, setSearchParams] = useSearchParams();
 
   const year = Number(params.get("year") || "2025");
   const semester = Number(params.get("semester") || "1");
-  // BARU: Baca serviceId dari parameter URL, default-nya string kosong ("") untuk "Semua Layanan"
   const serviceId = params.get("serviceId") || "";
 
   const [loading, setLoading] = useState(true);
@@ -31,7 +29,6 @@ export default function FrontPage() {
       setError("");
       try {
         const s = await getActiveSurvey({ year, semester });
-        // BARU: Kirim serviceId saat memanggil API analytics
         const a = await getAnalytics({ surveyId: s?.id, year, semester, serviceId });
         if (off) return;
         setSurvey(s);
@@ -43,11 +40,9 @@ export default function FrontPage() {
       }
     })();
     return () => { off = true; };
-    // BARU: Tambahkan serviceId ke dependency array agar data di-fetch ulang saat filter berubah
   }, [year, semester, serviceId]);
 
   const unsurRows = useMemo(() => {
-    // ... (tidak ada perubahan di sini)
     if (!analytics?.unsur) return [];
     return Object.keys(CHART_LABELS).map(k => ({
       key: k,
@@ -57,10 +52,8 @@ export default function FrontPage() {
     }));
   }, [analytics]);
 
-  // BARU: Buat fungsi untuk menangani perubahan pada dropdown
   const handleServiceChange = (event) => {
     const newServiceId = event.target.value;
-    // Perbarui parameter 'serviceId' di URL, sambil mempertahankan 'year' dan 'semester'
     setSearchParams({ year, semester, serviceId: newServiceId }, { replace: true });
   };
 
@@ -69,12 +62,11 @@ export default function FrontPage() {
   if (!analytics || (analytics.totalResponses ?? 0) === 0)
     return <div className="widget-body" style={{ padding: 24 }}>Belum ada data untuk periode ini.</div>;
 
-  const demo = analytics.demographics || { status:{}, gender:{}, pendidikan:{} };
+  const demo = analytics.demografi || { status:{}, gender:{}, pendidikan:{} };
 
   return (
     <div className="widget-body">
       <div className="summary-container">
-        {/* ... (SummaryBox tidak berubah) ... */}
         <SummaryBox title="TOTAL RESPONDEN" value={analytics.totalResponses} />
         <SummaryBox title="INDEKS KEPUASAN" value={analytics.ikm.toFixed(2)} subValue={analytics.mutu} />
         <SummaryBox title="STATUS KEPEGAWAIAN" data={demo.status} type="table" />
@@ -82,7 +74,6 @@ export default function FrontPage() {
         <SummaryBox title="PENDIDIKAN" data={demo.pendidikan} type="table" />
       </div>
 
-      {/* BARU: Tambahkan bagian filter dropdown di sini */}
       <div style={{ margin: '2.5rem 0', textAlign: 'center' }}>
         <h4 style={{ margin: '0 0 0.5rem 0', color: '#4a5568', fontWeight: 600, fontSize: '1.2rem' }}>
           Grafik Per Unsur Pelayanan
@@ -112,6 +103,22 @@ export default function FrontPage() {
           ))}
         </select>
       </div>
+
+      {/* --- BLOK BARU: Tampilkan statistik ini HANYA JIKA layanan dipilih --- */}
+      {serviceId && analytics && (
+        <div style={{
+          textAlign: 'center',
+          marginTop: '-1.5rem', // Sesuaikan spasi agar pas di bawah dropdown
+          marginBottom: '2rem',
+          fontSize: '1.1rem',
+          color: 'var(--text-color)',
+        }}>
+          IKM Layanan: <strong>{analytics.ikm.toFixed(2)}</strong> | 
+          Mutu: <strong>{analytics.mutu}</strong> | 
+          ({analytics.totalResponses} Responden)
+        </div>
+      )}
+      {/* --- AKHIR BLOK BARU --- */}
 
       <UnsurSummaryTable unsurData={unsurRows.map(r => ({ nama: r.nama, nilai: r.nilai }))} />
 

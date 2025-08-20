@@ -15,24 +15,18 @@ class PublicController extends Controller
     public function active(Request $r)
     {
         $q = Survey::query();
-
         if ($r->filled('year') && $r->filled('semester')) {
             $q->where('year', (int) $r->year)->where('semester', (int) $r->semester);
         } else {
             $q->where('is_active', 1);
         }
-
         $survey = $q->with([
             'services:id,survey_id,name,order_idx',
             'questions:id,survey_id,code,label,type,min,max,order_idx,required'
         ])->orderByDesc('year')->orderByDesc('semester')->firstOrFail();
-
         return response()->json($survey);
     }
 
-    /**
-     * Analitik untuk frontpage
-     */
     public function analytics(Request $req)
     {
         try {
@@ -49,36 +43,25 @@ class PublicController extends Controller
                 return response()->json(['message' => 'Survey not found for the given period.'], 404);
             }
 
-            // --- PERBAIKAN LOGIKA CACHING ---
-            // Kunci cache sekarang akan unik untuk setiap layanan yang dipilih
+            // Buat Kunci Cache yang Unik untuk setiap filter
             $serviceIdForCache = $req->query('service_id', 'all');
             $cacheKey = "analytics:survey:{$surveyId}:service:{$serviceIdForCache}";
             $cacheDuration = 3600; // Simpan selama 1 jam
 
-            // Gunakan Cache::remember. Jika data ada, langsung kembalikan. Jika tidak, hitung dan simpan.
             $data = Cache::remember($cacheKey, $cacheDuration, function () use ($req, $surveyId) {
-                
                 $serviceId = $req->query('service_id');
-                
-                $survey = Survey::with(['questions' => function ($q) {
-                    $q->orderBy('order_idx');
-                }])->find($surveyId);
-
+                $survey = Survey::with(['questions' => fn($q) => $q->orderBy('order_idx')])->find($surveyId);
                 if (!$survey) return null;
 
                 $services = SurveyService::where('survey_id', $surveyId)->orderBy('order_idx')->get(['id', 'name']);
-
                 $respQ = SurveyResponse::where('survey_id', $surveyId);
                 if ($serviceId) {
                     $respQ->where('service_id', (int)$serviceId);
                 }
                 $responses = $respQ->get(['id','gender','status','usia','pendidikan']);
-                $respIds   = $responses->pluck('id');
-                $total     = $responses->count();
-
-                $groupCount = function (string $col) use ($responses) {
-                    return $responses->pluck($col)->filter(fn($v) => $v !== null && $v !== '')->countBy()->sortKeys();
-                };
+                $respIds = $responses->pluck('id');
+                $total = $responses->count();
+                $groupCount = fn(string $col) => $responses->pluck($col)->filter(fn($v) => $v !== null && $v !== '')->countBy()->sortKeys();
 
                 $unsur = [];
                 $kodesSkala = $survey->questions->where('type', 'scale')->pluck('code');
@@ -87,25 +70,16 @@ class PublicController extends Controller
                 foreach ($kodesSkala as $code) {
                     $avg = 0.0;
                     $counts = [1 => 0, 2 => 0, 3 => 0, 4 => 0];
-
                     if ($total > 0 && $respIds->isNotEmpty()) {
                         $answersForUnsur = SurveyAnswer::whereIn('response_id', $respIds)->where('question_code', $code);
                         $avg = $answersForUnsur->clone()->avg('value') ?? 0.0;
                         $sumAllValues += $answersForUnsur->clone()->sum('value');
-                        $distribution = $answersForUnsur->clone()->toBase()
-                                        ->select('value', DB::raw('count(*) as total'))
-                                        ->groupBy('value')->pluck('total', 'value');
+                        $distribution = $answersForUnsur->clone()->toBase()->select('value', DB::raw('count(*) as total'))->groupBy('value')->pluck('total', 'value');
                         foreach ($distribution as $value => $count) {
                             if (isset($counts[$value])) $counts[$value] = $count;
                         }
                     }
-                    $unsur[] = [
-                        'code'  => $code,
-                        'label' => optional($survey->questions->firstWhere('code', $code))->label,
-                        'avg'   => round($avg, 4),
-                        'ikm'   => round($avg * 25, 2),
-                        'counts' => array_values($counts)
-                    ];
+                    $unsur[] = ['code' => $code, 'label' => optional($survey->questions->firstWhere('code', $code))->label, 'avg' => round($avg, 4), 'ikm' => round($avg * 25, 2), 'counts' => array_values($counts)];
                 }
 
                 $countAllCells = $total * $kodesSkala->count();
@@ -113,28 +87,16 @@ class PublicController extends Controller
                 $ikm = round($nrr * 25, 2);
                 $mutu = $this->mutu($ikm);
 
-                $saran = [];
-                if ($respIds->isNotEmpty()) {
-                    $saran = SurveyAnswer::whereIn('response_id', $respIds)->where('question_code', 'saran')
-                        ->whereNotNull('text_value')->where('text_value', '<>', '')
-                        ->orderByDesc('id')->limit(200)->pluck('text_value')->toArray();
-                }
+                $saran = $respIds->isNotEmpty() ? SurveyAnswer::whereIn('response_id', $respIds)->where('question_code', 'saran')->whereNotNull('text_value')->where('text_value', '<>', '')->orderByDesc('id')->limit(200)->pluck('text_value')->toArray() : [];
 
                 return [
-                    'survey_id' => $surveyId, 'services' => $services, 'totalResponses' => $total,
-                    'ikm' => $ikm, 'mutu' => $mutu,
-                    'demografi' => [
-                        'gender' => $groupCount('gender'), 'status' => $groupCount('status'),
-                        'usia' => $groupCount('usia'), 'pendidikan' => $groupCount('pendidikan'),
-                    ],
+                    'survey_id' => $surveyId, 'services' => $services, 'totalResponses' => $total, 'ikm' => $ikm, 'mutu' => $mutu,
+                    'demografi' => ['gender' => $groupCount('gender'), 'status' => $groupCount('status'), 'usia' => $groupCount('usia'), 'pendidikan' => $groupCount('pendidikan')],
                     'unsur' => $unsur, 'saran' => $saran,
                 ];
             });
 
-            if ($data === null) {
-                 return response()->json(['message' => 'Survey not found'], 404);
-            }
-            
+            if ($data === null) return response()->json(['message' => 'Survey not found'], 404);
             return response()->json($data);
 
         } catch (\Throwable $e) {
@@ -142,7 +104,7 @@ class PublicController extends Controller
             return response()->json(['message' => 'Server error while processing analytics'], 500);
         }
     }
-    
+
     public function storeResponse(Request $request)
     {
         $data = $request->validate([
@@ -158,20 +120,10 @@ class PublicController extends Controller
             'answers.*.text' => 'nullable|string',
         ]);
 
-        $resp = SurveyResponse::create([
-            'survey_id' => $data['survey_id'], 'service_id' => $data['service_id'],
-            'client_ip' => $request->ip(), 'user_agent' => $request->userAgent(),
-            'gender' => $data['gender'] ?? null, 'status' => $data['status'] ?? null,
-            'usia' => $data['usia'] ?? null, 'pendidikan' => $data['pendidikan'] ?? null,
-        ]);
+        $resp = SurveyResponse::create(['survey_id' => $data['survey_id'], 'service_id' => $data['service_id'], 'client_ip' => $request->ip(), 'user_agent' => $request->userAgent(), 'gender' => $data['gender'] ?? null, 'status' => $data['status'] ?? null, 'usia' => $data['usia'] ?? null, 'pendidikan' => $data['pendidikan'] ?? null]);
 
         foreach ($data['answers'] as $a) {
-            SurveyAnswer::create([
-                'response_id'   => $resp->id,
-                'question_code' => $a['code'],
-                'value'         => $a['code'] === 'saran' ? null : ($a['value'] ?? null),
-                'text_value'    => $a['code'] === 'saran' ? ($a['text'] ?? null) : null,
-            ]);
+            SurveyAnswer::create(['response_id' => $resp->id, 'question_code' => $a['code'], 'value' => $a['code'] === 'saran' ? null : ($a['value'] ?? null), 'text_value' => $a['code'] === 'saran' ? ($a['text'] ?? null) : null]);
         }
         return response()->json(['ok' => true, 'id' => $resp->id]);
     }
