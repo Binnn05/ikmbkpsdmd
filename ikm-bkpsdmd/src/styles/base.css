@@ -1,0 +1,148 @@
+/* ===== Variabel & dasar ===== */
+:root{
+  --primary-color:#2c5282;
+  --secondary-color:#3182ce;
+  --background-color:#f7fafc;
+  --card-background:#ffffff;
+  --text-color:#2d3748;
+  --text-light:#718096;
+  --border-color:#e2e8f0;
+  --shadow-color:rgba(0,0,0,.05);
+  --green-highlight:rgba(76,175,80,.1);
+  --red-highlight:rgba(239,68,68,.1);
+}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--background-color);
+  color:var(--text-color);
+  margin:0; padding:0;
+}
+
+hr{ margin:2.5rem 0; border:0; border-top:1px solid var(--border-color); }
+
+/* ===== Container umum ===== */
+.widget-container{
+  max-width:960px; margin:auto; border-radius:16px;
+  box-shadow:0 10px 25px -5px var(--shadow-color), 0 10px 10px -5px var(--shadow-color);
+  overflow:hidden; background:var(--card-background); border:1px solid var(--border-color);
+}
+.widget-body{ padding:1.5rem 2rem 2rem; }
+
+.footer{ text-align:center; padding:1.5rem; font-size:.9rem; color:var(--text-light); }
+
+/* ===== Header publik ===== */
+.widget-header{
+  background:linear-gradient(135deg,var(--primary-color) 0%,var(--secondary-color) 100%);
+  color:#fff; padding:2rem;
+  display:flex; align-items:center; gap:16px; position:relative;
+}
+.widget-header h2{ margin:0; font-size:2rem; font-weight:700; }
+.widget-header p{ margin:0; font-size:1.1rem; opacity:.85; font-weight:400; }
+
+.header-logo{ position:static; transform:none; height:100px; width:auto; flex-shrink:0; }
+.header-text{ flex:1; padding-right:260px; }       /* ruang untuk tombol kanan */
+.header-row{ display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap; }
+
+/* === Garis tabel di SummaryBox (boks ringkasan) === */
+.summary-box table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+
+.summary-box td{
+  padding: 6px 4px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.summary-box tr:last-child td{
+  border-bottom: none;
+}
+
+.summary-box td:last-child{
+  text-align: right;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+
+/* Tombol kanan header */
+.header-actions{
+  position:absolute; top:110px; right:16px;
+  display:flex; align-items:center; gap:8px;
+}
+.header-select{
+  appearance:none; padding:10px 12px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12);
+  color:#fff; font-weight:600; cursor:pointer;
+}
+.header-select option{ color:#111; }
+
+/* ===== Tombol umum (samakan ukuran <a> dan <button>) ===== */
+.btn-primary{
+  background:#2c5282;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .2s ease-in-out;
+  text-decoration:none;
+
+  /* kunci ukuran */
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:42px;           /* tinggi seragam */
+  padding:0 16px;        /* vertikal 0 agar tidak nambah tinggi */
+  line-height:1;         /* cegah tinggi teks menambah tinggi total */
+}
+.btn-primary:hover{ background:#1e3a5f; }
+
+/* ===== Statistik Card ===== */
+.stat-card p {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-color); /* garis tipis abu */
+}
+
+.stat-card p:last-child {
+  border-bottom: none; /* hilangkan garis di item terakhir */
+}
+
+/* ===== Dropdown tombol seragam ===== */
+.dropdown{ position:relative; display:inline-block; }
+.dropdown .btn-primary{ /* biar mewarisi ukuran yang sama */
+  height:42px;
+  padding:0 16px;
+}
+.dropdown-content{
+  display:none; position:absolute; background:#fff; min-width:160px;
+  box-shadow:0 8px 16px rgba(0,0,0,.2); z-index:1; border-radius:6px; overflow:hidden;
+}
+.dropdown-content button{
+  width:100%; padding:10px 14px; border:none; background:#2c5282; color:#fff; cursor:pointer; text-align:left;
+}
+.dropdown-content button:hover{ background:#1e3a5f; }
+.dropdown:hover .dropdown-content{ display:block; }
+
+/* ===== Responsif dasar ===== */
+@media (max-width:640px){
+  .widget-container{ border-radius:0; border-left:none; border-right:none; box-shadow:none; }
+  .widget-body{ padding:1.5rem; }
+
+  .widget-header{
+    flex-direction:column; align-items:center; text-align:center; gap:12px;
+  }
+  .widget-header h2{ font-size:1.6rem; }
+  .header-logo{ height:80px; margin-bottom:4px; }
+  .header-text{ padding-right:0; }
+  .header-actions{
+    position:static; margin-top:8px; flex-wrap:wrap; justify-content:center; width:100%;
+  }
+}

@@ -1,0 +1,51 @@
+/* ===== Modal ===== */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:grid; place-items:center; z-index:9999; }
+.modal-panel{ width:min(720px,92vw); background:#fff; border-radius:16px; box-shadow:0 10px 32px rgba(0,0,0,.25); overflow:hidden; }
+.modal-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border-color); }
+.modal-body{ padding:16px; max-height:70vh; overflow:auto; }
+.modal-close{ background:transparent; border:none; font-size:22px; cursor:pointer; line-height:1; }
+
+/* ===== Form Kuesioner ===== */
+.survey-title{ font-weight:700; font-size:1.1rem; margin-bottom:6px; }
+.form-group{ margin-bottom:14px; }
+.form-label{ display:block; font-weight:600; margin-bottom:6px; }
+.req{ color:#ffd3d3; }
+
+.scale-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.scale-item{ display:inline-flex; align-items:center; gap:6px; }
+
+.textarea{ width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); box-sizing:border-box; }
+.error-text{ color:#c00; font-size:13px; margin-top:4px; }
+.form-actions{ display:flex; gap:10px; margin-top:12px; }
+
+.kuesioner-form .form-group{ 
+  margin-bottom: 14px;
+}
+
+.kuesioner-form .form-group label{
+  display: block;              /* <-- bikin label 1 baris penuh */
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0 0 6px;             /* jarak label ke dropdown */
+}
+
+.kuesioner-form .form-control{
+  display: block;              /* pastikan turun baris */
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.kuesioner-form .error-text{
+  color: #e11d48;
+  font-size: .85rem;
+  margin-top: 6px;
+}
+
+/* opsional: rapikan baris skala 1–4 */
+.kuesioner-form .scale-row{
+  display: flex; gap: 16px; padding: 6px 2px;
+}
+.kuesioner-form .scale-item{ display: inline-flex; align-items: center; gap: 6px; }
